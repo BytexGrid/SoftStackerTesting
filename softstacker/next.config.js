@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
   images: {
-    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -10,9 +8,7 @@ const nextConfig = {
         pathname: '/7.x/**',
       },
     ],
-  },
-  assetPrefix: '/SoftStacker/',
-  basePath: '/SoftStacker'
+  }
 }
 
 module.exports = nextConfig 
