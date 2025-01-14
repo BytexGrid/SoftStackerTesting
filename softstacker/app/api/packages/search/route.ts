@@ -10,70 +10,70 @@ export async function GET(request: Request) {
   }
 
   try {
-    let url = '';
+    // Handle each OS separately
     switch (os) {
-      case 'windows':
-        url = `https://community.chocolatey.org/api/v2/Search()?$filter=IsLatestVersion&$skip=0&$top=10&searchTerm='${query}'&targetFramework=''&includePrerelease=false`;
-        break;
-      case 'macos':
-        // Fetch all formulae and filter on the server side
-        url = 'https://formulae.brew.sh/api/formula.json';
-        const brewResponse = await fetch(url, {
+      case 'windows': {
+        const url = `https://community.chocolatey.org/api/v2/Search()?$filter=IsLatestVersion&$skip=0&$top=10&searchTerm='${query}'&targetFramework=''&includePrerelease=false`;
+        console.log('Fetching from Chocolatey:', url);
+        
+        const response = await fetch(url, {
           headers: {
             'Accept': 'application/json',
             'User-Agent': 'SoftStacker/1.0'
           }
         });
         
-        if (!brewResponse.ok) {
-          throw new Error(`Failed to fetch Homebrew data: ${brewResponse.status} ${brewResponse.statusText}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch Chocolatey data: ${response.status}`);
         }
 
-        const brewData = await brewResponse.json();
+        const data = await response.json();
+        return NextResponse.json(data);
+      }
+
+      case 'macos': {
+        const url = 'https://formulae.brew.sh/api/formula.json';
+        console.log('Fetching from Homebrew:', url);
         
-        // Score and sort results by relevance
-        interface ScoredFormula {
-          formula: any;
-          score: number;
+        const response = await fetch(url, {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'SoftStacker/1.0'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch Homebrew data: ${response.status}`);
         }
 
-        const scoredResults = brewData
+        const data = await response.json();
+        
+        // Score and sort results
+        const scoredResults = data
           .map((formula: any) => {
             const nameLower = formula.name.toLowerCase();
             const queryLower = query.toLowerCase();
             let score = 0;
             
-            // Exact match gets highest score
-            if (nameLower === queryLower) {
-              score += 100;
-            }
-            // Starts with query gets high score
-            else if (nameLower.startsWith(queryLower)) {
-              score += 50;
-            }
-            // Contains query in name gets medium score
-            else if (nameLower.includes(queryLower)) {
-              score += 25;
-            }
-            // Contains query in description gets low score
-            else if (formula.desc?.toLowerCase().includes(queryLower)) {
-              score += 10;
-            }
+            if (nameLower === queryLower) score += 100;
+            else if (nameLower.startsWith(queryLower)) score += 50;
+            else if (nameLower.includes(queryLower)) score += 25;
+            else if (formula.desc?.toLowerCase().includes(queryLower)) score += 10;
             
             return { formula, score };
           })
-          .filter((item: ScoredFormula) => item.score > 0) // Only keep matches
-          .sort((a: ScoredFormula, b: ScoredFormula) => b.score - a.score) // Sort by score descending
-          .slice(0, 10) // Take top 10
-          .map((item: ScoredFormula) => item.formula); // Extract formula data
+          .filter((item: any) => item.score > 0)
+          .sort((a: any, b: any) => b.score - a.score)
+          .slice(0, 10)
+          .map((item: any) => item.formula);
 
         return NextResponse.json(scoredResults);
+      }
 
-      case 'linux':
+      case 'linux': {
         const pkgManager = searchParams.get('pkgManager') || 'apt';
-        let transformedData = [];
         
-        // Mock data for development
+        // Mock data for development/demo
         const mockData = {
           apt: [
             { name: 'git', description: 'fast, scalable, distributed revision control system', version: 'latest', aptPackage: 'git' },
@@ -92,47 +92,30 @@ export async function GET(request: Request) {
           ]
         };
 
-        // Filter mock data based on search query
         const searchLower = query.toLowerCase();
+        let results;
+
         switch (pkgManager) {
           case 'apt':
-            transformedData = mockData.apt
-              .filter(pkg => pkg.name.toLowerCase().includes(searchLower) || pkg.description.toLowerCase().includes(searchLower));
-            break;
           case 'dnf':
-            transformedData = mockData.dnf
-              .filter(pkg => pkg.name.toLowerCase().includes(searchLower) || pkg.description.toLowerCase().includes(searchLower));
-            break;
           case 'pacman':
-            transformedData = mockData.pacman
-              .filter(pkg => pkg.name.toLowerCase().includes(searchLower) || pkg.description.toLowerCase().includes(searchLower));
+            results = mockData[pkgManager as keyof typeof mockData]
+              .filter(pkg => 
+                pkg.name.toLowerCase().includes(searchLower) || 
+                pkg.description.toLowerCase().includes(searchLower)
+              );
             break;
           default:
             return NextResponse.json({ error: 'Unsupported package manager' }, { status: 400 });
         }
 
-        console.log(`${pkgManager.toUpperCase()} search results:`, transformedData);
-        return NextResponse.json(transformedData);
+        console.log(`${pkgManager.toUpperCase()} search results:`, results);
+        return NextResponse.json(results);
+      }
 
       default:
         return NextResponse.json({ error: 'Unsupported OS' }, { status: 400 });
     }
-
-    console.log('Fetching from:', url);
-    const response = await fetch(url, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'SoftStacker/1.0'
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch package data: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('API Response:', JSON.stringify(data).slice(0, 200));
-    return NextResponse.json(data);
   } catch (error) {
     console.error('Package search error:', error);
     return NextResponse.json(
