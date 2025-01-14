@@ -1,6 +1,61 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const targetOS = searchParams.get('os');
+    const category = searchParams.get('category');
+
+    let query = supabase
+      .from('templates')
+      .select(`
+        *,
+        apps (*),
+        votes (count)
+      `);
+
+    // Apply filters if provided
+    if (targetOS) {
+      query = query.eq('target_os', targetOS);
+    }
+    if (category && category !== 'all') {
+      query = query.eq('category', category);
+    }
+
+    const { data: templates, error } = await query;
+
+    if (error) throw error;
+
+    // Transform the data to include vote count
+    const transformedTemplates = templates.map(template => ({
+      ...template,
+      votes: template.votes?.length || 0,
+      apps: template.apps.map((app: any) => ({
+        name: app.name,
+        description: app.description,
+        website: app.website,
+        category: app.category,
+        subcategory: app.subcategory,
+        isRequired: app.is_required,
+        chocolateyPackage: app.chocolatey_package,
+        brewPackage: app.brew_package,
+        aptPackage: app.apt_package,
+        dnfPackage: app.dnf_package,
+        pacmanPackage: app.pacman_package,
+      }))
+    }));
+
+    return NextResponse.json(transformedTemplates);
+  } catch (error) {
+    console.error('Failed to fetch templates:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch templates' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -24,6 +79,7 @@ export async function POST(request: Request) {
       description: app.description,
       website: app.website,
       category: app.category,
+      subcategory: app.subcategory,
       is_required: app.isRequired,
       chocolatey_package: app.chocolateyPackage,
       brew_package: app.brewPackage,

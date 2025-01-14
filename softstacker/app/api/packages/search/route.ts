@@ -10,112 +10,173 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Handle each OS separately
+    let url = '';
     switch (os) {
-      case 'windows': {
-        const url = `https://community.chocolatey.org/api/v2/Search()?$filter=IsLatestVersion&$skip=0&$top=10&searchTerm='${query}'&targetFramework=''&includePrerelease=false`;
-        console.log('Fetching from Chocolatey:', url);
-        
-        const response = await fetch(url, {
+      case 'windows':
+        url = `https://community.chocolatey.org/api/v2/Search()?$filter=IsLatestVersion&$skip=0&$top=10&searchTerm='${query}'&targetFramework=''&includePrerelease=false`;
+        break;
+      case 'macos':
+        // Fetch all formulae and filter on the server side
+        url = 'https://formulae.brew.sh/api/formula.json';
+        const brewResponse = await fetch(url, {
           headers: {
             'Accept': 'application/json',
             'User-Agent': 'SoftStacker/1.0'
           }
         });
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch Chocolatey data: ${response.status}`);
+        if (!brewResponse.ok) {
+          throw new Error(`Failed to fetch Homebrew data: ${brewResponse.status} ${brewResponse.statusText}`);
         }
 
-        const data = await response.json();
-        return NextResponse.json(data);
-      }
-
-      case 'macos': {
-        const url = 'https://formulae.brew.sh/api/formula.json';
-        console.log('Fetching from Homebrew:', url);
+        const brewData = await brewResponse.json();
         
-        const response = await fetch(url, {
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'SoftStacker/1.0'
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch Homebrew data: ${response.status}`);
+        // Score and sort results by relevance
+        interface ScoredFormula {
+          formula: any;
+          score: number;
         }
 
-        const data = await response.json();
-        
-        // Score and sort results
-        const scoredResults = data
+        const scoredResults = brewData
           .map((formula: any) => {
             const nameLower = formula.name.toLowerCase();
             const queryLower = query.toLowerCase();
             let score = 0;
             
-            if (nameLower === queryLower) score += 100;
-            else if (nameLower.startsWith(queryLower)) score += 50;
-            else if (nameLower.includes(queryLower)) score += 25;
-            else if (formula.desc?.toLowerCase().includes(queryLower)) score += 10;
+            // Exact match gets highest score
+            if (nameLower === queryLower) {
+              score += 100;
+            }
+            // Starts with query gets high score
+            else if (nameLower.startsWith(queryLower)) {
+              score += 50;
+            }
+            // Contains query in name gets medium score
+            else if (nameLower.includes(queryLower)) {
+              score += 25;
+            }
+            // Contains query in description gets low score
+            else if (formula.desc?.toLowerCase().includes(queryLower)) {
+              score += 10;
+            }
             
             return { formula, score };
           })
-          .filter((item: any) => item.score > 0)
-          .sort((a: any, b: any) => b.score - a.score)
-          .slice(0, 10)
-          .map((item: any) => item.formula);
+          .filter((item: ScoredFormula) => item.score > 0) // Only keep matches
+          .sort((a: ScoredFormula, b: ScoredFormula) => b.score - a.score) // Sort by score descending
+          .slice(0, 10) // Take top 10
+          .map((item: ScoredFormula) => item.formula); // Extract formula data
 
         return NextResponse.json(scoredResults);
-      }
 
-      case 'linux': {
+      case 'linux':
         const pkgManager = searchParams.get('pkgManager') || 'apt';
+        let transformedData = [];
         
-        // Mock data for development/demo
-        const mockData = {
-          apt: [
-            { name: 'git', description: 'fast, scalable, distributed revision control system', version: 'latest', aptPackage: 'git' },
-            { name: 'git-all', description: 'fast, scalable, distributed revision control system (all subpackages)', version: 'latest', aptPackage: 'git-all' },
-            { name: 'git-core', description: 'fast, scalable, distributed revision control system (core tools)', version: 'latest', aptPackage: 'git-core' }
-          ],
-          dnf: [
-            { name: 'git', description: 'Fast Version Control System', version: 'latest', dnfPackage: 'git' },
-            { name: 'git-all', description: 'Meta-package to pull in all git tools', version: 'latest', dnfPackage: 'git-all' },
-            { name: 'git-core', description: 'Core package of git tools', version: 'latest', dnfPackage: 'git-core' }
-          ],
-          pacman: [
-            { name: 'git', description: 'the fast distributed version control system', version: '2.43.0-1', pacmanPackage: 'git' },
-            { name: 'git-lfs', description: 'Git extension for versioning large files', version: '3.4.1-1', pacmanPackage: 'git-lfs' },
-            { name: 'git-extras', description: 'GIT utilities -- repo summary, repl, changelog population, author commit percentages and more', version: '7.1.0-1', pacmanPackage: 'git-extras' }
-          ]
-        };
+        try {
+          switch (pkgManager) {
+            case 'apt':
+              // Using Debian packages API
+              url = `https://sources.debian.org/api/search/${encodeURIComponent(query)}/`;
+              const aptResponse = await fetch(url);
+              
+              if (!aptResponse.ok) {
+                throw new Error(`Failed to fetch APT data: ${aptResponse.status}`);
+              }
+              
+              const aptData = await aptResponse.json();
+              transformedData = (aptData.results?.exact || aptData.results?.substring || [])
+                .map((pkg: any) => ({
+                  name: pkg.name,
+                  description: pkg.description?.split(/[.!?](?:\s|$)/)[0] || pkg.name,
+                  version: 'latest',
+                  website: `https://packages.debian.org/stable/${pkg.name}`,
+                  aptPackage: pkg.name
+                }))
+                .slice(0, 10);
+              break;
 
-        const searchLower = query.toLowerCase();
-        let results;
+            case 'dnf':
+              // Using Fedora packages API
+              url = `https://pkgs.org/api/packages/?q=${encodeURIComponent(query)}&distribution=fedora`;
+              const dnfResponse = await fetch(url);
+              
+              if (!dnfResponse.ok) {
+                throw new Error(`Failed to fetch DNF data: ${dnfResponse.status}`);
+              }
+              
+              const dnfData = await dnfResponse.json();
+              transformedData = (dnfData.results || [])
+                .map((pkg: any) => ({
+                  name: pkg.name,
+                  description: pkg.description?.split(/[.!?](?:\s|$)/)[0] || pkg.name,
+                  version: pkg.version || 'latest',
+                  website: `https://packages.fedoraproject.org/pkgs/${pkg.name}`,
+                  dnfPackage: pkg.name
+                }))
+                .slice(0, 10);
+              break;
 
-        switch (pkgManager) {
-          case 'apt':
-          case 'dnf':
-          case 'pacman':
-            results = mockData[pkgManager as keyof typeof mockData]
-              .filter(pkg => 
-                pkg.name.toLowerCase().includes(searchLower) || 
-                pkg.description.toLowerCase().includes(searchLower)
-              );
-            break;
-          default:
-            return NextResponse.json({ error: 'Unsupported package manager' }, { status: 400 });
+            case 'pacman':
+              // Using AUR RPC interface
+              url = `https://aur.archlinux.org/rpc/v5/search/${encodeURIComponent(query)}`;
+              const pacmanResponse = await fetch(url);
+              
+              if (!pacmanResponse.ok) {
+                throw new Error(`Failed to fetch Pacman data: ${pacmanResponse.status}`);
+              }
+              
+              const pacmanData = await pacmanResponse.json();
+              if (pacmanData.type === 'error') {
+                throw new Error(`AUR error: ${pacmanData.error}`);
+              }
+              
+              transformedData = (pacmanData.results || [])
+                .map((pkg: any) => ({
+                  name: pkg.Name,
+                  description: pkg.Description?.split(/[.!?](?:\s|$)/)[0] || pkg.Name,
+                  version: pkg.Version,
+                  website: pkg.URL || `https://aur.archlinux.org/packages/${pkg.Name}`,
+                  pacmanPackage: pkg.Name
+                }))
+                .slice(0, 10);
+              break;
+
+            default:
+              throw new Error('Unsupported package manager');
+          }
+
+          if (transformedData.length === 0) {
+            console.log(`No packages found for ${pkgManager} with query: ${query}`);
+          } else {
+            console.log(`${pkgManager.toUpperCase()} search results:`, transformedData.slice(0, 2));
+          }
+
+          return NextResponse.json(transformedData);
+        } catch (error) {
+          console.error(`${pkgManager} search error:`, error);
+          return NextResponse.json({ error: `Failed to fetch ${pkgManager} package data` }, { status: 500 });
         }
-
-        console.log(`${pkgManager.toUpperCase()} search results:`, results);
-        return NextResponse.json(results);
-      }
 
       default:
         return NextResponse.json({ error: 'Unsupported OS' }, { status: 400 });
     }
+
+    console.log('Fetching from:', url);
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'SoftStacker/1.0'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch package data: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('API Response:', JSON.stringify(data).slice(0, 200));
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Package search error:', error);
     return NextResponse.json(

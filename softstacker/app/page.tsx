@@ -1,22 +1,23 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Home() {
   const operatingSystems = [
     {
       name: 'Windows',
-      icon: '/windows.svg',
+      icon: '/os-icons/windows.svg',
       description: 'Find software templates for Windows 10 and 11',
       href: '/windows'
     },
     {
       name: 'macOS',
-      icon: '/macos.svg',
+      icon: '/os-icons/macos.svg',
       description: 'Discover tools and apps for your Mac',
       href: '/macos'
     },
     {
       name: 'Linux',
-      icon: '/linux.svg',
+      icon: '/os-icons/linux.svg',
       description: 'Explore open-source software for Linux distributions',
       href: '/linux'
     }
@@ -24,31 +25,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header with contained width for content */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                Software Templates
-              </h1>
-              <p className="text-xl text-gray-600 dark:text-gray-300">
-                Find and install curated software stacks for your operating system
-              </p>
-            </div>
-            <Link
-              href="/submit"
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Submit Template
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {/* Hero Section - Full width with contained content */}
       <div className="relative w-full overflow-hidden bg-gradient-to-b from-indigo-100 via-white to-white dark:from-indigo-950 dark:via-gray-900 dark:to-gray-900">
         <div className="absolute inset-0">
@@ -100,7 +76,12 @@ export default function Home() {
                   <div className="flex flex-col items-center text-center">
                     <div className="mb-6">
                       <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-800 rounded-full flex items-center justify-center transition-colors">
-                        <div className="text-2xl text-indigo-600 dark:text-indigo-400">{os.name[0]}</div>
+                        <img
+                          src={os.icon}
+                          alt={`${os.name} icon`}
+                          className="w-8 h-8 text-indigo-600 dark:text-indigo-400"
+                          style={{ filter: 'invert(37%) sepia(74%) saturate(1045%) hue-rotate(213deg) brightness(91%) contrast(105%)' }}
+                        />
                       </div>
                     </div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">

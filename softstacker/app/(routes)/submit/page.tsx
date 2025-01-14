@@ -18,6 +18,7 @@ type App = {
   description: string;
   website: string;
   category: string;
+  subcategory?: string;  // Optional subcategory field
   isRequired: boolean;
   // Package names for different package managers
   chocolateyPackage?: string;  // Windows
@@ -40,6 +41,50 @@ export default function SubmitTemplate() {
     category: 'Development',
     isRequired: false
   });
+
+  const handleSaveAsDraft = () => {
+    const draftData = {
+      targetOS,
+      title,
+      description,
+      category,
+      apps,
+      currentApp
+    };
+
+    // Create a blob and download link
+    const blob = new Blob([JSON.stringify(draftData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `template-draft-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleLoadDraft = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const draftData = JSON.parse(e.target?.result as string);
+        setTargetOS(draftData.targetOS);
+        setTitle(draftData.title);
+        setDescription(draftData.description);
+        setCategory(draftData.category);
+        setApps(draftData.apps);
+        setCurrentApp(draftData.currentApp);
+      } catch (error) {
+        console.error('Error loading draft:', error);
+        alert('Failed to load draft file. Please make sure it\'s a valid template draft.');
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const handleAddApp = () => {
     if (currentApp.name && currentApp.description && currentApp.website) {
@@ -106,7 +151,7 @@ export default function SubmitTemplate() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Navigation */}
-        <nav className="mb-8">
+        <nav className="mb-8 flex justify-between items-center">
           <Link
             href="/"
             className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-2"
@@ -116,6 +161,34 @@ export default function SubmitTemplate() {
             </svg>
             Back to Home
           </Link>
+          <div className="flex items-center gap-4">
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleLoadDraft}
+              className="hidden"
+              id="draft-file-input"
+            />
+            <label
+              htmlFor="draft-file-input"
+              className="cursor-pointer px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              Load Draft
+            </label>
+            <button
+              type="button"
+              onClick={handleSaveAsDraft}
+              className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
+              Save as Draft
+            </button>
+          </div>
         </nav>
 
         {/* Header */}
@@ -395,6 +468,20 @@ export default function SubmitTemplate() {
                 <label htmlFor="isRequired" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Required Application
                 </label>
+              </div>
+
+              <div>
+                <label htmlFor="subcategory" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Subcategory (Optional)
+                </label>
+                <input
+                  type="text"
+                  id="subcategory"
+                  value={currentApp.subcategory || ''}
+                  onChange={(e) => setCurrentApp({ ...currentApp, subcategory: e.target.value })}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                  placeholder="e.g., IDE, Database, Version Control"
+                />
               </div>
 
               <button
