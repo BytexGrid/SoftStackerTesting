@@ -1,26 +1,5 @@
 import { NextResponse } from 'next/server';
 
-interface PackageInfo {
-  name: string;
-  description: string;
-  version: string;
-  website?: string;
-  aptPackage?: string;
-  dnfPackage?: string;
-  pacmanPackage?: string;
-}
-
-interface ScoredFormula {
-  formula: PackageInfo;
-  score: number;
-}
-
-interface MockData {
-  apt: PackageInfo[];
-  dnf: PackageInfo[];
-  pacman: PackageInfo[];
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q');
@@ -37,6 +16,7 @@ export async function GET(request: Request) {
         url = `https://community.chocolatey.org/api/v2/Search()?$filter=IsLatestVersion&$skip=0&$top=10&searchTerm='${query}'&targetFramework=''&includePrerelease=false`;
         break;
       case 'macos':
+        // Fetch all formulae and filter on the server side
         url = 'https://formulae.brew.sh/api/formula.json';
         const brewResponse = await fetch(url, {
           headers: {
@@ -49,41 +29,52 @@ export async function GET(request: Request) {
           throw new Error(`Failed to fetch Homebrew data: ${brewResponse.status} ${brewResponse.statusText}`);
         }
 
-        const brewData = await brewResponse.json() as PackageInfo[];
+        const brewData = await brewResponse.json();
         
+        // Score and sort results by relevance
+        interface ScoredFormula {
+          formula: any;
+          score: number;
+        }
+
         const scoredResults = brewData
-          .map((formula: PackageInfo) => {
+          .map((formula: any) => {
             const nameLower = formula.name.toLowerCase();
             const queryLower = query.toLowerCase();
             let score = 0;
             
+            // Exact match gets highest score
             if (nameLower === queryLower) {
               score += 100;
             }
+            // Starts with query gets high score
             else if (nameLower.startsWith(queryLower)) {
               score += 50;
             }
+            // Contains query in name gets medium score
             else if (nameLower.includes(queryLower)) {
               score += 25;
             }
-            else if (formula.description?.toLowerCase().includes(queryLower)) {
+            // Contains query in description gets low score
+            else if (formula.desc?.toLowerCase().includes(queryLower)) {
               score += 10;
             }
             
-            return { formula, score } as ScoredFormula;
+            return { formula, score };
           })
-          .filter((item: ScoredFormula) => item.score > 0)
-          .sort((a: ScoredFormula, b: ScoredFormula) => b.score - a.score)
-          .slice(0, 10)
-          .map((item: ScoredFormula) => item.formula);
+          .filter((item: ScoredFormula) => item.score > 0) // Only keep matches
+          .sort((a: ScoredFormula, b: ScoredFormula) => b.score - a.score) // Sort by score descending
+          .slice(0, 10) // Take top 10
+          .map((item: ScoredFormula) => item.formula); // Extract formula data
 
         return NextResponse.json(scoredResults);
 
       case 'linux':
         const pkgManager = searchParams.get('pkgManager') || 'apt';
-        let transformedData: PackageInfo[] = [];
+        let transformedData = [];
         
-        const mockData: MockData = {
+        // Mock data for development
+        const mockData = {
           apt: [
             { name: 'git', description: 'fast, scalable, distributed revision control system', version: 'latest', aptPackage: 'git' },
             { name: 'git-all', description: 'fast, scalable, distributed revision control system (all subpackages)', version: 'latest', aptPackage: 'git-all' },
@@ -101,6 +92,7 @@ export async function GET(request: Request) {
           ]
         };
 
+        // Filter mock data based on search query
         const searchLower = query.toLowerCase();
         switch (pkgManager) {
           case 'apt':
