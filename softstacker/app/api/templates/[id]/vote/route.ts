@@ -2,6 +2,14 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+// This tells Next.js which paths to pre-render
+export async function generateStaticParams() {
+  return [];
+}
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     console.warn('Supabase configuration missing');

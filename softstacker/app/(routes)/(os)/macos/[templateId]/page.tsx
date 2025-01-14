@@ -57,6 +57,12 @@ const templateData = {
   ]
 };
 
+export async function generateStaticParams() {
+  return [];
+}
+
+export const dynamic = 'force-dynamic';
+
 export default function TemplateDetail({ params: _params }: { params: { templateId: string } }) {
   const [selectedApps, setSelectedApps] = useState(
     templateData.apps.filter(app => app.isRequired).map(app => app.name)
