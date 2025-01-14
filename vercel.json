@@ -1,5 +1,3 @@
 {
-  "buildCommand": "cd softstacker && npm run build",
-  "outputDirectory": "softstacker/.next",
-  "installCommand": "cd softstacker && npm install"
+  "root": "softstacker"
 } 
