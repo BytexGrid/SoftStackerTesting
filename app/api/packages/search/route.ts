@@ -1,5 +1,40 @@
 import { NextResponse } from 'next/server';
 
+interface PackageBase {
+  name: string;
+  description: string;
+  version: string;
+}
+
+interface AptPackage extends PackageBase {
+  aptPackage: string;
+}
+
+interface DnfPackage extends PackageBase {
+  dnfPackage: string;
+}
+
+interface PacmanPackage extends PackageBase {
+  pacmanPackage: string;
+}
+
+interface BrewFormula {
+  name: string;
+  desc?: string;
+  homepage?: string;
+}
+
+interface ScoredFormula {
+  formula: BrewFormula;
+  score: number;
+}
+
+interface MockData {
+  apt: AptPackage[];
+  dnf: DnfPackage[];
+  pacman: PacmanPackage[];
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q');
@@ -16,7 +51,6 @@ export async function GET(request: Request) {
         url = `https://community.chocolatey.org/api/v2/Search()?$filter=IsLatestVersion&$skip=0&$top=10&searchTerm='${query}'&targetFramework=''&includePrerelease=false`;
         break;
       case 'macos':
-        // Fetch all formulae and filter on the server side
         url = 'https://formulae.brew.sh/api/formula.json';
         const brewResponse = await fetch(url, {
           headers: {
@@ -29,52 +63,40 @@ export async function GET(request: Request) {
           throw new Error(`Failed to fetch Homebrew data: ${brewResponse.status} ${brewResponse.statusText}`);
         }
 
-        const brewData = await brewResponse.json();
+        const brewData = (await brewResponse.json()) as BrewFormula[];
         
-        // Score and sort results by relevance
-        interface ScoredFormula {
-          formula: any;
-          score: number;
-        }
-
         const scoredResults = brewData
-          .map((formula: any) => {
+          .map((formula: BrewFormula) => {
             const nameLower = formula.name.toLowerCase();
             const queryLower = query.toLowerCase();
             let score = 0;
             
-            // Exact match gets highest score
             if (nameLower === queryLower) {
               score += 100;
             }
-            // Starts with query gets high score
             else if (nameLower.startsWith(queryLower)) {
               score += 50;
             }
-            // Contains query in name gets medium score
             else if (nameLower.includes(queryLower)) {
               score += 25;
             }
-            // Contains query in description gets low score
             else if (formula.desc?.toLowerCase().includes(queryLower)) {
               score += 10;
             }
             
             return { formula, score };
           })
-          .filter((item: ScoredFormula) => item.score > 0) // Only keep matches
-          .sort((a: ScoredFormula, b: ScoredFormula) => b.score - a.score) // Sort by score descending
-          .slice(0, 10) // Take top 10
-          .map((item: ScoredFormula) => item.formula); // Extract formula data
+          .filter((item: ScoredFormula) => item.score > 0)
+          .sort((a: ScoredFormula, b: ScoredFormula) => b.score - a.score)
+          .slice(0, 10)
+          .map((item: ScoredFormula) => item.formula);
 
         return NextResponse.json(scoredResults);
 
       case 'linux':
         const pkgManager = searchParams.get('pkgManager') || 'apt';
-        let transformedData = [];
         
-        // Mock data for development
-        const mockData = {
+        const mockData: MockData = {
           apt: [
             { name: 'git', description: 'fast, scalable, distributed revision control system', version: 'latest', aptPackage: 'git' },
             { name: 'git-all', description: 'fast, scalable, distributed revision control system (all subpackages)', version: 'latest', aptPackage: 'git-all' },
@@ -92,8 +114,9 @@ export async function GET(request: Request) {
           ]
         };
 
-        // Filter mock data based on search query
         const searchLower = query.toLowerCase();
+        let transformedData: (AptPackage | DnfPackage | PacmanPackage)[] = [];
+        
         switch (pkgManager) {
           case 'apt':
             transformedData = mockData.apt
