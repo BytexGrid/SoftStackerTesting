@@ -1,38 +1,24 @@
 import { NextResponse } from 'next/server';
 
-interface PackageBase {
+interface PackageInfo {
   name: string;
   description: string;
   version: string;
-}
-
-interface AptPackage extends PackageBase {
-  aptPackage: string;
-}
-
-interface DnfPackage extends PackageBase {
-  dnfPackage: string;
-}
-
-interface PacmanPackage extends PackageBase {
-  pacmanPackage: string;
-}
-
-interface BrewFormula {
-  name: string;
-  desc?: string;
-  homepage?: string;
+  website?: string;
+  aptPackage?: string;
+  dnfPackage?: string;
+  pacmanPackage?: string;
 }
 
 interface ScoredFormula {
-  formula: BrewFormula;
+  formula: PackageInfo;
   score: number;
 }
 
 interface MockData {
-  apt: AptPackage[];
-  dnf: DnfPackage[];
-  pacman: PacmanPackage[];
+  apt: PackageInfo[];
+  dnf: PackageInfo[];
+  pacman: PackageInfo[];
 }
 
 export async function GET(request: Request) {
@@ -63,10 +49,10 @@ export async function GET(request: Request) {
           throw new Error(`Failed to fetch Homebrew data: ${brewResponse.status} ${brewResponse.statusText}`);
         }
 
-        const brewData = (await brewResponse.json()) as BrewFormula[];
+        const brewData = await brewResponse.json() as PackageInfo[];
         
         const scoredResults = brewData
-          .map((formula: BrewFormula) => {
+          .map((formula: PackageInfo) => {
             const nameLower = formula.name.toLowerCase();
             const queryLower = query.toLowerCase();
             let score = 0;
@@ -80,11 +66,11 @@ export async function GET(request: Request) {
             else if (nameLower.includes(queryLower)) {
               score += 25;
             }
-            else if (formula.desc?.toLowerCase().includes(queryLower)) {
+            else if (formula.description?.toLowerCase().includes(queryLower)) {
               score += 10;
             }
             
-            return { formula, score };
+            return { formula, score } as ScoredFormula;
           })
           .filter((item: ScoredFormula) => item.score > 0)
           .sort((a: ScoredFormula, b: ScoredFormula) => b.score - a.score)
@@ -95,6 +81,7 @@ export async function GET(request: Request) {
 
       case 'linux':
         const pkgManager = searchParams.get('pkgManager') || 'apt';
+        let transformedData: PackageInfo[] = [];
         
         const mockData: MockData = {
           apt: [
@@ -115,8 +102,6 @@ export async function GET(request: Request) {
         };
 
         const searchLower = query.toLowerCase();
-        let transformedData: (AptPackage | DnfPackage | PacmanPackage)[] = [];
-        
         switch (pkgManager) {
           case 'apt':
             transformedData = mockData.apt
