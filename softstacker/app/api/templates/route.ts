@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { Template, App } from '@/types/template';
+import { App } from '@/types/template';
 
 export async function GET(request: Request) {
   try {
