@@ -134,19 +134,7 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Hero Section - Full width with contained content */}
       <div className="relative w-full overflow-hidden bg-gradient-to-b from-indigo-100 via-white to-white dark:from-indigo-950 dark:via-gray-900 dark:to-gray-900">
-        {/* Cursor light effect - only show in dark theme */}
-        {isDarkTheme && (
-          <motion.div
-            className="fixed w-64 h-64 pointer-events-none z-10"
-            style={{
-              x: cursorXSpring,
-              y: cursorYSpring,
-            }}
-          >
-            <div className="absolute inset-0 bg-gradient-radial from-indigo-500/20 via-indigo-500/10 to-transparent rounded-full blur-2xl transform scale-150" />
-            <div className="absolute inset-0 bg-gradient-radial from-indigo-400/30 via-indigo-500/5 to-transparent rounded-full blur-xl" />
-          </motion.div>
-        )}
+        
 
         {/* Software Mole - only show in light theme */}
         {!isDarkTheme && (
