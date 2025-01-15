@@ -37,7 +37,7 @@ export default function TemplateDetail({ params }: { params: { templateId: strin
     async function fetchTemplate() {
       try {
         setLoading(true);
-        const response = await fetch(`/SoftStacker/api/templates/${params.templateId}`);
+        const response = await fetch(`/api/templates/${params.templateId}`);
         if (!response.ok) {
           if (response.status === 404) {
             throw new Error('Template not found');
