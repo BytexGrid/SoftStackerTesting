@@ -233,7 +233,7 @@ export default function Dashboard() {
         {/* Voted Templates */}
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Templates You've Voted On
+            Templates You&apos;ve Voted On
           </h2>
           
           {votedTemplates.length === 0 ? (
