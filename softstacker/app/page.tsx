@@ -5,19 +5,16 @@ export default function Home() {
   const operatingSystems = [
     {
       name: 'Windows',
-      icon: '/os-icons/windows.svg',
       description: 'Find software templates for Windows 10 and 11',
       href: '/windows'
     },
     {
       name: 'macOS',
-      icon: '/os-icons/macos.svg',
       description: 'Discover tools and apps for your Mac',
       href: '/macos'
     },
     {
       name: 'Linux',
-      icon: '/os-icons/linux.svg',
       description: 'Explore open-source software for Linux distributions',
       href: '/linux'
     }
@@ -76,12 +73,9 @@ export default function Home() {
                   <div className="flex flex-col items-center text-center">
                     <div className="mb-6">
                       <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-800 rounded-full flex items-center justify-center transition-colors">
-                        <img
-                          src={os.icon}
-                          alt={`${os.name} icon`}
-                          className="w-8 h-8 text-indigo-600 dark:text-indigo-400"
-                          style={{ filter: 'invert(37%) sepia(74%) saturate(1045%) hue-rotate(213deg) brightness(91%) contrast(105%)' }}
-                        />
+                        <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                          {os.name[0]}
+                        </span>
                       </div>
                     </div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
