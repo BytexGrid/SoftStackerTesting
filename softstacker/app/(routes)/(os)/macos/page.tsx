@@ -39,7 +39,7 @@ export default function MacOSTemplates() {
     async function fetchTemplates() {
       try {
         setLoading(true);
-        const response = await fetch(`/SoftStacker/api/templates?os=macos${selectedCategory !== 'all' ? `&category=${selectedCategory}` : ''}`);
+        const response = await fetch(`/api/templates?os=macos${selectedCategory !== 'all' ? `&category=${selectedCategory}` : ''}`);
         if (!response.ok) {
           throw new Error('Failed to fetch templates');
         }

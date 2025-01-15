@@ -37,7 +37,7 @@ export default function WindowsTemplates() {
     async function fetchTemplates() {
       try {
         setLoading(true);
-        const url = new URL('./api/templates', window.location.href);
+        const url = new URL('/api/templates', window.location.href);
         url.searchParams.set('os', 'windows');
         if (selectedCategory !== 'all') {
           url.searchParams.set('category', selectedCategory);

@@ -34,8 +34,8 @@ export default function LinuxTemplates() {
       try {
         setLoading(true);
         const url = selectedCategory === 'All Templates'
-          ? '/SoftStacker/api/templates?os=linux'
-          : `/SoftStacker/api/templates?os=linux&category=${selectedCategory.toLowerCase()}`;
+          ? '/api/templates?os=linux'
+          : `/api/templates?os=linux&category=${selectedCategory.toLowerCase()}`;
         
         const response = await fetch(url);
         if (!response.ok) {
