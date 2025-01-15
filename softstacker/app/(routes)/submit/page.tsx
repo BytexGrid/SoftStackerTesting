@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/app/context/AuthContext';
 import Link from 'next/link';
 import PackageSuggestions from '@/app/components/PackageSuggestions';
 
@@ -29,6 +31,8 @@ type App = {
 };
 
 export default function SubmitTemplate() {
+  const router = useRouter();
+  const { user, loading } = useAuth();
   const [targetOS, setTargetOS] = useState<OS>('windows');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -41,6 +45,28 @@ export default function SubmitTemplate() {
     category: 'Development',
     isRequired: false
   });
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/');
+      alert('Please sign in to submit a template');
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
+  }
 
   const handleSaveAsDraft = () => {
     const draftData = {

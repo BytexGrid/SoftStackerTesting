@@ -3,9 +3,18 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import ThemeToggle from './ThemeToggle';
+import { useAuth } from '../context/AuthContext';
+import Image from 'next/image';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { user, loading, signInWithGithub, signOut } = useAuth();
+
+  const handleSwitchAccount = async () => {
+    await signOut();
+    signInWithGithub();
+  };
 
   return (
     <nav className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
@@ -52,9 +61,73 @@ export default function Navbar() {
             <Link href="/submit" className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-500 dark:hover:bg-green-400">
               Submit Template
             </Link>
-            <button className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-500 dark:hover:bg-indigo-400">
-              Sign In
-            </button>
+            {loading ? (
+              <div className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium opacity-50">
+                Loading...
+              </div>
+            ) : user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center space-x-2 text-sm focus:outline-none"
+                >
+                  <Image
+                    src={user.user_metadata.avatar_url}
+                    alt="Profile"
+                    width={32}
+                    height={32}
+                    className="rounded-full"
+                  />
+                  <span className="text-gray-700 dark:text-gray-300">
+                    {user.user_metadata.user_name}
+                  </span>
+                </button>
+                
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-48 py-2 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      href="/settings"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Settings
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        handleSwitchAccount();
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Switch Account
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        signOut();
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button 
+                onClick={signInWithGithub}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-500 dark:hover:bg-indigo-400"
+              >
+                Sign In
+              </button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -101,9 +174,65 @@ export default function Navbar() {
               <Link href="/submit" className="block w-full bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-500 dark:hover:bg-green-400 mb-2">
                 Submit Template
               </Link>
-              <button className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-500 dark:hover:bg-indigo-400">
-                Sign In
-              </button>
+              {loading ? (
+                <div className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium opacity-50">
+                  Loading...
+                </div>
+              ) : user ? (
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2 px-4 py-2">
+                    <Image
+                      src={user.user_metadata.avatar_url}
+                      alt="Profile"
+                      width={32}
+                      height={32}
+                      className="rounded-full"
+                    />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {user.user_metadata.user_name}
+                    </span>
+                  </div>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/settings"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Settings
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      handleSwitchAccount();
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Switch Account
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      signOut();
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={signInWithGithub}
+                  className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-500 dark:hover:bg-indigo-400"
+                >
+                  Sign In
+                </button>
+              )}
             </div>
           </div>
         </div>

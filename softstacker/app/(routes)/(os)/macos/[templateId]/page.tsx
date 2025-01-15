@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import VoteButton from '@/components/VoteButton';
 
 type Template = {
   id: string;
@@ -19,6 +21,8 @@ type Template = {
     brewPackage?: string;
   }[];
   votes: number;
+  author_name: string;
+  author_avatar: string;
 };
 
 export default function TemplateDetail({ params }: { params: { templateId: string } }) {
@@ -132,11 +136,29 @@ brew install ${apps.map(app => app.brewPackage).join(' ')}`;
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
               {template.title}
             </h1>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-semibold text-gray-900 dark:text-white">{template.votes}</span>
-                <span className="text-gray-500 dark:text-gray-400">votes</span>
-              </div>
+            <div className="flex flex-col items-end gap-3">
+              {template.author_name && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-700 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                  {template.author_avatar && (
+                    <Image
+                      src={template.author_avatar}
+                      alt={template.author_name}
+                      width={24}
+                      height={24}
+                      className="rounded-full"
+                    />
+                  )}
+                  <a 
+                    href={`https://github.com/${template.author_name}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  >
+                    {template.author_name}
+                  </a>
+                </div>
+              )}
+              <VoteButton templateId={template.id} initialVotes={template.votes} />
             </div>
           </div>
           <p className="text-xl text-gray-600 dark:text-gray-300">{template.description}</p>

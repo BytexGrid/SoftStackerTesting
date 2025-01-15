@@ -1,66 +1,119 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/app/context/AuthContext';
+import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
 
 interface VoteButtonProps {
   templateId: string;
-  initialVotes: number;
+  initialVotes?: number;
+  onVoteChange?: (newVoteCount: number) => void;
+  showVoteButtons?: boolean;
 }
 
-export default function VoteButton({ templateId, initialVotes }: VoteButtonProps) {
+export default function VoteButton({ templateId, initialVotes = 0, onVoteChange, showVoteButtons = true }: VoteButtonProps) {
+  const { user } = useAuth();
   const [votes, setVotes] = useState(initialVotes);
-  const [isVoting, setIsVoting] = useState(false);
-  const [hasVoted, setHasVoted] = useState(false);
+  const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleVote = async () => {
+  useEffect(() => {
+    const checkUserVote = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/templates/${templateId}/vote/check`);
+        if (!response.ok) throw new Error('Failed to check vote');
+        
+        const data = await response.json();
+        setUserVote(data.voteType);
+        setVotes(data.votes);
+        onVoteChange?.(data.votes);
+      } catch (error) {
+        console.error('Error checking vote:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkUserVote();
+  }, [templateId, user, onVoteChange]);
+
+  const handleVote = async (voteType: 'up' | 'down') => {
+    if (!user) {
+      alert('Please sign in to vote');
+      return;
+    }
+
     try {
-      setIsVoting(true);
       const response = await fetch(`/api/templates/${templateId}/vote`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ voteType })
       });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        if (data.message === 'Vote removed') {
-          setVotes(prev => prev - 1);
-          setHasVoted(false);
-        } else {
-          setVotes(prev => prev + 1);
-          setHasVoted(true);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          alert('Please sign in again to vote');
+          return;
         }
+        throw new Error('Failed to vote');
       }
+
+      const data = await response.json();
+      setVotes(data.votes);
+      setUserVote(data.message === 'Vote removed' ? null : voteType);
+      onVoteChange?.(data.votes);
     } catch (error) {
       console.error('Error voting:', error);
-    } finally {
-      setIsVoting(false);
+      alert('Failed to vote. Please try again.');
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-sm">
+        <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded h-8 w-20"></div>
+      </div>
+    );
+  }
+
   return (
-    <button
-      onClick={handleVote}
-      disabled={isVoting}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-        hasVoted
-          ? 'bg-green-600 hover:bg-green-700 text-white'
-          : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white'
-      }`}
-    >
-      <svg
-        className={`w-5 h-5 ${hasVoted ? 'text-white' : 'text-gray-600 dark:text-gray-300'}`}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
-        />
-      </svg>
-      <span>{votes}</span>
-    </button>
+    <div className="flex items-center gap-1">
+      {showVoteButtons && (
+        <button
+          onClick={() => handleVote('up')}
+          className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+            userVote === 'up' ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'
+          }`}
+          title="Upvote"
+        >
+          <ArrowUpIcon className="h-5 w-5" />
+        </button>
+      )}
+      
+      <span className={`min-w-[2ch] text-center ${
+        votes > 0 ? 'text-green-600 dark:text-green-400' :
+        votes < 0 ? 'text-red-600 dark:text-red-400' :
+        'text-gray-600 dark:text-gray-400'
+      }`}>
+        {votes}
+      </span>
+
+      {showVoteButtons && (
+        <button
+          onClick={() => handleVote('down')}
+          className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+            userVote === 'down' ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'
+          }`}
+          title="Downvote"
+        >
+          <ArrowDownIcon className="h-5 w-5" />
+        </button>
+      )}
+    </div>
   );
 } 

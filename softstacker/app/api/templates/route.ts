@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
 export async function GET(request: Request) {
   try {
@@ -11,8 +13,7 @@ export async function GET(request: Request) {
       .from('templates')
       .select(`
         *,
-        apps (*),
-        votes (count)
+        apps (*)
       `);
 
     // Apply filters if provided
@@ -27,10 +28,10 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
-    // Transform the data to include vote count
+    // Transform the data to use cached total_votes
     const transformedTemplates = templates.map(template => ({
       ...template,
-      votes: template.votes?.length || 0,
+      votes: template.total_votes || 0,
       apps: template.apps.map((app: any) => ({
         name: app.name,
         description: app.description,
@@ -58,14 +59,33 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    // Get authenticated user
+    const supabaseAuth = createRouteHandlerClient({ cookies });
+    const { data: { session }, error: authError } = await supabaseAuth.auth.getSession();
+
+    if (authError || !session) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { title, description, category, targetOS, apps } = body;
 
-    // First, insert the template
+    // First, insert the template with user data
     const { data: template, error: templateError } = await supabase
       .from('templates')
       .insert([
-        { title, description, category, target_os: targetOS }
+        { 
+          title, 
+          description, 
+          category, 
+          target_os: targetOS,
+          user_id: session.user.id,
+          author_name: session.user.user_metadata.user_name,
+          author_avatar: session.user.user_metadata.avatar_url
+        }
       ])
       .select()
       .single();
