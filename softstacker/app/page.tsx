@@ -38,29 +38,16 @@ export default function Home() {
       attributeFilter: ['class']
     });
 
-    const moveCursor = (e: MouseEvent) => {
-      cursorX.set(e.clientX - 128);
-      cursorY.set(e.clientY - 128);
-      
-      // Only check distance if in light theme
-      if (!isDarkTheme) {
-        const dx = e.clientX - molePosition.x;
-        const dy = e.clientY - molePosition.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < 100 && !isHiding) {
-          setIsHiding(true);
-          setTimeout(moveMole, 800); // Increased timeout to match animation duration
-        }
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isHiding) {
+        cursorX.set(e.clientX - 128);
+        cursorY.set(e.clientY - 128);
       }
     };
 
-    window.addEventListener('mousemove', moveCursor);
-    return () => {
-      window.removeEventListener('mousemove', moveCursor);
-      observer.disconnect();
-    };
-  }, [molePosition, isDarkTheme]);
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [cursorX, cursorY, isHiding]);
 
   useEffect(() => {
     // Reset mole state when theme changes

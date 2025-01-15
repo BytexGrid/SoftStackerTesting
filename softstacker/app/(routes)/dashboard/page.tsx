@@ -193,7 +193,9 @@ export default function Dashboard() {
           
           {userTemplates.length === 0 ? (
             <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
-              <p className="text-gray-600 dark:text-gray-400">You haven't created any templates yet.</p>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                You haven&apos;t created any templates yet. Get started by creating your first template!
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -236,7 +238,9 @@ export default function Dashboard() {
           
           {votedTemplates.length === 0 ? (
             <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
-              <p className="text-gray-600 dark:text-gray-400">You haven't voted on any templates yet.</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                You haven&apos;t voted on any templates yet.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
