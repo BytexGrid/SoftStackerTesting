@@ -73,15 +73,36 @@ export default function Home() {
   }, [isDarkTheme]);
 
   const moveMole = () => {
-    // Get viewport dimensions
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    const gridSize = 24;
+    const maxX = Math.floor(window.innerWidth / gridSize);
     
-    // Calculate new random position
-    const newX = Math.random() * (viewportWidth - 100); // Subtract mole width
-    const newY = Math.random() * (viewportHeight - 100); // Subtract mole height
+    // Define center content area to avoid
+    const centerX = window.innerWidth / 2;
+    const centerWidth = 800; // Width of center content to avoid
+    const leftBound = (centerX - centerWidth/2) / gridSize;
+    const rightBound = (centerX + centerWidth/2) / gridSize;
     
-    setMolePosition({ x: newX, y: newY });
+    let newX, newY;
+    do {
+      // Randomly choose left or right side
+      const chooseSide = Math.random() > 0.5;
+      if (chooseSide) {
+        // Right side
+        newX = Math.floor(Math.random() * (maxX - rightBound)) + rightBound;
+      } else {
+        // Left side
+        newX = Math.floor(Math.random() * leftBound);
+      }
+      newY = Math.floor(Math.random() * 15) + 5; // Keep within hero section
+    } while (
+      newX < 2 || // Keep away from left edge
+      newX > maxX - 2 // Keep away from right edge
+    );
+    
+    setMolePosition({ 
+      x: newX * gridSize, 
+      y: newY * gridSize 
+    });
     setIsHiding(false);
   };
 
