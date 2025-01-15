@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 export default function Home() {
   const cursorX = useMotionValue(-100);
@@ -116,17 +117,20 @@ export default function Home() {
     {
       name: 'Windows',
       description: 'Find software templates for Windows 10 and 11',
-      href: '/windows'
+      href: '/windows',
+      icon: 'https://upload.wikimedia.org/wikipedia/commons/5/5f/Windows_logo_-_2012.svg'
     },
     {
       name: 'macOS',
       description: 'Discover tools and apps for your Mac',
-      href: '/macos'
+      href: '/macos',
+      icon: 'https://upload.wikimedia.org/wikipedia/commons/3/30/MacOS_logo.svg'
     },
     {
       name: 'Linux',
       description: 'Explore open-source software for Linux distributions',
-      href: '/linux'
+      href: '/linux',
+      icon: 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Icons8_flat_linux.svg'
     }
   ];
 
@@ -372,25 +376,28 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* OS Selection Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
               {operatingSystems.map((os) => (
                 <Link
                   key={os.name}
                   href={os.href}
-                  className="group bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-8 border border-gray-100 dark:border-gray-700 transform hover:-translate-y-1"
+                  className="group relative bg-white/5 hover:bg-white/10 rounded-xl p-6 transition-all duration-200"
                 >
                   <div className="flex flex-col items-center text-center">
-                    <div className="mb-6">
-                      <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-800 rounded-full flex items-center justify-center transition-colors">
-                        <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                          {os.name[0]}
-                        </span>
-                      </div>
+                    <div className="w-16 h-16 mb-4 flex items-center justify-center">
+                      <Image
+                        src={os.icon}
+                        alt={os.name}
+                        width={48}
+                        height={48}
+                        className="transition-transform group-hover:scale-110"
+                      />
                     </div>
-                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                       {os.name}
-                    </h2>
-                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
                       {os.description}
                     </p>
                   </div>
