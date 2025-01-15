@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PackageInfo, WindowsPackage, MacPackage, LinuxPackage, AURPackage } from '@/types/package';
+import { PackageInfo, MacPackage, LinuxPackage, AURPackage } from '@/types/package';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

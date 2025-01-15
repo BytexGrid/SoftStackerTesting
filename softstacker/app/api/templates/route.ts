@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { Template, App } from '@/types/template';
 
 export async function GET(request: Request) {
   try {
@@ -31,19 +32,19 @@ export async function GET(request: Request) {
     const transformedTemplates = templates.map(template => ({
       ...template,
       votes: template.votes?.length || 0,
-      apps: template.apps.map((app: any) => ({
+      apps: template.apps.map((app: App) => ({
         name: app.name,
         description: app.description,
         website: app.website,
         category: app.category,
         subcategory: app.subcategory,
-        isRequired: app.is_required,
-        chocolateyPackage: app.chocolatey_package,
-        brewPackage: app.brew_package,
-        aptPackage: app.apt_package,
-        dnfPackage: app.dnf_package,
-        pacmanPackage: app.pacman_package,
-      }))
+        isRequired: app.isRequired,
+        chocolateyPackage: app.chocolateyPackage,
+        brewPackage: app.brewPackage,
+        aptPackage: app.aptPackage,
+        dnfPackage: app.dnfPackage,
+        pacmanPackage: app.pacmanPackage
+      })),
     }));
 
     return NextResponse.json(transformedTemplates);
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
     if (templateError) throw templateError;
 
     // Then, insert the apps with the template_id
-    const appsWithTemplateId = apps.map((app: any) => ({
+    const appsWithTemplateId = apps.map((app: App) => ({
       template_id: template.id,
       name: app.name,
       description: app.description,

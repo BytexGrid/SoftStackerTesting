@@ -43,7 +43,7 @@ export default function TemplateDetail({ params }: { params: { templateId: strin
         const data = await response.json();
         setTemplate(data);
         // Initialize selected apps with required apps
-        setSelectedApps(data.apps.filter((app: any) => app.isRequired).map((app: any) => app.name));
+        setSelectedApps(data.apps.filter((app: Template['apps'][0]) => app.isRequired).map((app: Template['apps'][0]) => app.name));
       } catch (err) {
         console.error('Error fetching template:', err);
         setError(err instanceof Error ? err.message : 'Failed to load template');
