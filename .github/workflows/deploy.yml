@@ -1,4 +1,4 @@
-name: Deploy Next.js site to Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -32,12 +32,9 @@ jobs:
         uses: actions/configure-pages@v4
         
       - name: Install dependencies
-        run: cd softstacker && npm install
+        run: cd softstacker && npm ci
         
       - name: Build with Next.js
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: cd softstacker && npm run build
         
       - name: Fix permissions
@@ -49,7 +46,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./softstacker/out
+          path: softstacker/out
 
   deploy:
     environment:
