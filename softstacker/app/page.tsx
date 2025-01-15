@@ -42,12 +42,27 @@ export default function Home() {
       if (!isHiding) {
         cursorX.set(e.clientX - 128);
         cursorY.set(e.clientY - 128);
+        
+        // Only check distance if in light theme
+        if (!isDarkTheme) {
+          const dx = e.clientX - molePosition.x;
+          const dy = e.clientY - molePosition.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 100 && !isHiding) {
+            setIsHiding(true);
+            setTimeout(moveMole, 800); // Move after hiding animation
+          }
+        }
       }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [cursorX, cursorY, isHiding]);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      observer.disconnect();
+    };
+  }, [cursorX, cursorY, isHiding, isDarkTheme, molePosition]);
 
   useEffect(() => {
     // Reset mole state when theme changes
@@ -58,36 +73,15 @@ export default function Home() {
   }, [isDarkTheme]);
 
   const moveMole = () => {
-    const gridSize = 24;
-    const maxX = Math.floor(window.innerWidth / gridSize);
+    // Get viewport dimensions
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     
-    // Define center content area to avoid
-    const centerX = window.innerWidth / 2;
-    const centerWidth = 800; // Increased to ensure beaver stays in side areas
-    const leftBound = (centerX - centerWidth/2) / gridSize;
-    const rightBound = (centerX + centerWidth/2) / gridSize;
+    // Calculate new random position
+    const newX = Math.random() * (viewportWidth - 100); // Subtract mole width
+    const newY = Math.random() * (viewportHeight - 100); // Subtract mole height
     
-    let newX, newY;
-    do {
-      // Randomly choose left or right side
-      const chooseSide = Math.random() > 0.5;
-      if (chooseSide) {
-        // Right side
-        newX = Math.floor(Math.random() * (maxX - rightBound)) + rightBound;
-      } else {
-        // Left side
-        newX = Math.floor(Math.random() * leftBound);
-      }
-      newY = Math.floor(Math.random() * 15) + 5; // Keep within hero section
-    } while (
-      newX < 2 || // Keep away from left edge
-      newX > maxX - 2 // Keep away from right edge
-    );
-    
-    setMolePosition({ 
-      x: newX * gridSize, 
-      y: newY * gridSize 
-    });
+    setMolePosition({ x: newX, y: newY });
     setIsHiding(false);
   };
 
