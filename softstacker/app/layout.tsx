@@ -22,8 +22,10 @@ export default function RootLayout({
       <body className={`${inter.className} antialiased bg-white dark:bg-gray-900`}>
         <ThemeProvider>
           <AuthProvider>
-            <Navbar />
-            {children}
+            <div className="pt-16">
+              <Navbar />
+              {children}
+            </div>
           </AuthProvider>
         </ThemeProvider>
       </body>
