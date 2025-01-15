@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { App } from '@/types/template';
 
 export async function GET(
   request: Request,
@@ -29,18 +28,18 @@ export async function GET(
     const transformedTemplate = {
       ...template,
       votes: template.votes?.length || 0,
-      apps: template.apps.map((app: App) => ({
+      apps: template.apps.map((app: any) => ({
         name: app.name,
         description: app.description,
         website: app.website,
         category: app.category,
         subcategory: app.subcategory,
-        isRequired: app.isRequired,
-        chocolateyPackage: app.chocolateyPackage,
-        brewPackage: app.brewPackage,
-        aptPackage: app.aptPackage,
-        dnfPackage: app.dnfPackage,
-        pacmanPackage: app.pacmanPackage
+        isRequired: app.is_required,
+        chocolateyPackage: app.chocolatey_package,
+        brewPackage: app.brew_package,
+        aptPackage: app.apt_package,
+        dnfPackage: app.dnf_package,
+        pacmanPackage: app.pacman_package,
       }))
     };
 

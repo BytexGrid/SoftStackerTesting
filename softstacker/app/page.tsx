@@ -76,12 +76,11 @@ export default function Home() {
                   <div className="flex flex-col items-center text-center">
                     <div className="mb-6">
                       <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-800 rounded-full flex items-center justify-center transition-colors">
-                        <Image
+                        <img
                           src={os.icon}
                           alt={`${os.name} icon`}
-                          width={48}
-                          height={48}
-                          className="w-12 h-12"
+                          className="w-8 h-8 text-indigo-600 dark:text-indigo-400"
+                          style={{ filter: 'invert(37%) sepia(74%) saturate(1045%) hue-rotate(213deg) brightness(91%) contrast(105%)' }}
                         />
                       </div>
                     </div>

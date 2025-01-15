@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { PackageInfo, MacPackage, LinuxPackage, AURPackage } from '@/types/package';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -17,6 +16,7 @@ export async function GET(request: Request) {
         url = `https://community.chocolatey.org/api/v2/Search()?$filter=IsLatestVersion&$skip=0&$top=10&searchTerm='${query}'&targetFramework=''&includePrerelease=false`;
         break;
       case 'macos':
+        // Fetch all formulae and filter on the server side
         url = 'https://formulae.brew.sh/api/formula.json';
         const brewResponse = await fetch(url, {
           headers: {
@@ -31,46 +31,52 @@ export async function GET(request: Request) {
 
         const brewData = await brewResponse.json();
         
+        // Score and sort results by relevance
         interface ScoredFormula {
-          formula: MacPackage;
+          formula: any;
           score: number;
         }
 
         const scoredResults = brewData
-          .map((formula: MacPackage) => {
+          .map((formula: any) => {
             const nameLower = formula.name.toLowerCase();
             const queryLower = query.toLowerCase();
             let score = 0;
             
+            // Exact match gets highest score
             if (nameLower === queryLower) {
               score += 100;
             }
+            // Starts with query gets high score
             else if (nameLower.startsWith(queryLower)) {
               score += 50;
             }
+            // Contains query in name gets medium score
             else if (nameLower.includes(queryLower)) {
               score += 25;
             }
+            // Contains query in description gets low score
             else if (formula.desc?.toLowerCase().includes(queryLower)) {
               score += 10;
             }
             
             return { formula, score };
           })
-          .filter((item: ScoredFormula) => item.score > 0)
-          .sort((a: ScoredFormula, b: ScoredFormula) => b.score - a.score)
-          .slice(0, 10)
-          .map((item: ScoredFormula) => item.formula);
+          .filter((item: ScoredFormula) => item.score > 0) // Only keep matches
+          .sort((a: ScoredFormula, b: ScoredFormula) => b.score - a.score) // Sort by score descending
+          .slice(0, 10) // Take top 10
+          .map((item: ScoredFormula) => item.formula); // Extract formula data
 
         return NextResponse.json(scoredResults);
 
       case 'linux':
         const pkgManager = searchParams.get('pkgManager') || 'apt';
-        let transformedData: PackageInfo[] = [];
+        let transformedData = [];
         
         try {
           switch (pkgManager) {
             case 'apt':
+              // Using Debian packages API
               url = `https://sources.debian.org/api/search/${encodeURIComponent(query)}/`;
               const aptResponse = await fetch(url);
               
@@ -80,7 +86,7 @@ export async function GET(request: Request) {
               
               const aptData = await aptResponse.json();
               transformedData = (aptData.results?.exact || aptData.results?.substring || [])
-                .map((pkg: LinuxPackage) => ({
+                .map((pkg: any) => ({
                   name: pkg.name,
                   description: pkg.description?.split(/[.!?](?:\s|$)/)[0] || pkg.name,
                   version: 'latest',
@@ -91,6 +97,7 @@ export async function GET(request: Request) {
               break;
 
             case 'dnf':
+              // Using Fedora packages API
               url = `https://pkgs.org/api/packages/?q=${encodeURIComponent(query)}&distribution=fedora`;
               const dnfResponse = await fetch(url);
               
@@ -100,7 +107,7 @@ export async function GET(request: Request) {
               
               const dnfData = await dnfResponse.json();
               transformedData = (dnfData.results || [])
-                .map((pkg: LinuxPackage) => ({
+                .map((pkg: any) => ({
                   name: pkg.name,
                   description: pkg.description?.split(/[.!?](?:\s|$)/)[0] || pkg.name,
                   version: pkg.version || 'latest',
@@ -111,6 +118,7 @@ export async function GET(request: Request) {
               break;
 
             case 'pacman':
+              // Using AUR RPC interface
               url = `https://aur.archlinux.org/rpc/v5/search/${encodeURIComponent(query)}`;
               const pacmanResponse = await fetch(url);
               
@@ -124,7 +132,7 @@ export async function GET(request: Request) {
               }
               
               transformedData = (pacmanData.results || [])
-                .map((pkg: AURPackage) => ({
+                .map((pkg: any) => ({
                   name: pkg.Name,
                   description: pkg.Description?.split(/[.!?](?:\s|$)/)[0] || pkg.Name,
                   version: pkg.Version,

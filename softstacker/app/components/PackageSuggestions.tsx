@@ -1,44 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
 
-interface ChocolateyPackage {
-  Title: string;
-  Id: string;
-  Description: string;
-  Version: string;
-  DownloadCount: number;
-  ProjectUrl: string;
-}
-
-interface HomebrewPackage {
-  name: string;
-  desc: string;
-  versions: {
-    stable: string;
-  };
-  homepage: string;
-  full_name: string;
-  tap: string;
-}
-
-interface AptPackage {
-  source_package_name: string;
-  source_package_version: string;
-}
-
-interface DnfPackage {
-  name: string;
-  summary: string;
-  version: string;
-}
-
-interface PacmanPackage {
-  Name: string;
-  Description: string;
-  Version: string;
-  URL: string;
-}
-
 type PackageInfo = {
   name: string;
   description: string;
@@ -95,7 +57,7 @@ export default function PackageSuggestions({ searchTerm, targetOS, onSelect }: P
         
         if (targetOS === 'windows') {
           const results = data.d?.results || data.value || [];
-          transformedData = results.map((item: ChocolateyPackage) => ({
+          transformedData = results.map((item: any) => ({
             name: item.Title || item.Id,
             description: item.Description?.split(/[.!?](?:\s|$)/)[0] || '',
             version: item.Version,
@@ -103,7 +65,7 @@ export default function PackageSuggestions({ searchTerm, targetOS, onSelect }: P
             website: item.ProjectUrl
           }));
         } else if (targetOS === 'macos') {
-          transformedData = data.map((item: HomebrewPackage) => ({
+          transformedData = data.map((item: any) => ({
             name: item.name,
             description: item.desc?.split(/[.!?](?:\s|$)/)[0] || '',
             version: item.versions?.stable,
@@ -116,7 +78,7 @@ export default function PackageSuggestions({ searchTerm, targetOS, onSelect }: P
           switch (selectedPkgManager) {
             case 'apt':
               const entries = data.entries || [];
-              transformedData = entries.slice(0, 10).map((item: AptPackage) => ({
+              transformedData = entries.slice(0, 10).map((item: any) => ({
                 name: item.source_package_name,
                 description: item.source_package_version,
                 version: item.source_package_version,
@@ -125,7 +87,7 @@ export default function PackageSuggestions({ searchTerm, targetOS, onSelect }: P
               }));
               break;
             case 'dnf':
-              transformedData = data.rows?.slice(0, 10).map((item: DnfPackage) => ({
+              transformedData = data.rows?.slice(0, 10).map((item: any) => ({
                 name: item.name,
                 description: item.summary,
                 version: item.version,
@@ -134,7 +96,7 @@ export default function PackageSuggestions({ searchTerm, targetOS, onSelect }: P
               })) || [];
               break;
             case 'pacman':
-              transformedData = data.results?.slice(0, 10).map((item: PacmanPackage) => ({
+              transformedData = data.results?.slice(0, 10).map((item: any) => ({
                 name: item.Name,
                 description: item.Description,
                 version: item.Version,

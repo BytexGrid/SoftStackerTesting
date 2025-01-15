@@ -32,7 +32,7 @@ export default function TemplateDetail({ params }: { params: { templateId: strin
     async function fetchTemplate() {
       try {
         setLoading(true);
-        const response = await fetch(`/api/templates/${params.templateId}`);
+        const response = await fetch(`/SoftStacker/api/templates/${params.templateId}`);
         if (!response.ok) {
           if (response.status === 404) {
             throw new Error('Template not found');
@@ -41,12 +41,9 @@ export default function TemplateDetail({ params }: { params: { templateId: strin
         }
         
         const data = await response.json();
-        if (!data || data.error) {
-          throw new Error(data.error || 'Failed to load template');
-        }
         setTemplate(data);
         // Initialize selected apps with required apps
-        setSelectedApps(data.apps.filter((app: Template['apps'][0]) => app.isRequired).map((app: Template['apps'][0]) => app.name));
+        setSelectedApps(data.apps.filter((app: any) => app.isRequired).map((app: any) => app.name));
       } catch (err) {
         console.error('Error fetching template:', err);
         setError(err instanceof Error ? err.message : 'Failed to load template');
