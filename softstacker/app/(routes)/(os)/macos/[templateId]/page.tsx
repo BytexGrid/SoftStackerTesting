@@ -41,6 +41,9 @@ export default function TemplateDetail({ params }: { params: { templateId: strin
         }
         
         const data = await response.json();
+        if (!data || data.error) {
+          throw new Error(data.error || 'Failed to load template');
+        }
         setTemplate(data);
         // Initialize selected apps with required apps
         setSelectedApps(data.apps.filter((app: Template['apps'][0]) => app.isRequired).map((app: Template['apps'][0]) => app.name));
