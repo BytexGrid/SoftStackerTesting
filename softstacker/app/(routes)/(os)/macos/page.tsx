@@ -124,6 +124,7 @@ export default function MacOSTemplates() {
                       templateId={template.id} 
                       initialVotes={template.votes}
                       showVoteButtons={false}
+                      useStaticVotes={true}
                       onVoteChange={(newVotes: number) => {
                         setTemplateVotes(prev => ({
                           ...prev,

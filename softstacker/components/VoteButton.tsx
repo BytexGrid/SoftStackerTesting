@@ -9,17 +9,18 @@ interface VoteButtonProps {
   initialVotes?: number;
   onVoteChange?: (newVoteCount: number) => void;
   showVoteButtons?: boolean;
+  useStaticVotes?: boolean;
 }
 
-export default function VoteButton({ templateId, initialVotes = 0, onVoteChange, showVoteButtons = true }: VoteButtonProps) {
+export default function VoteButton({ templateId, initialVotes = 0, onVoteChange, showVoteButtons = true, useStaticVotes = false }: VoteButtonProps) {
   const { user } = useAuth();
   const [votes, setVotes] = useState(initialVotes);
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!useStaticVotes);
 
   useEffect(() => {
     const checkUserVote = async () => {
-      if (!user) {
+      if (!user || useStaticVotes) {
         setIsLoading(false);
         return;
       }
@@ -40,7 +41,7 @@ export default function VoteButton({ templateId, initialVotes = 0, onVoteChange,
     };
 
     checkUserVote();
-  }, [templateId, user, onVoteChange]);
+  }, [templateId, user, onVoteChange, useStaticVotes]);
 
   const handleVote = async (voteType: 'up' | 'down') => {
     if (!user) {
