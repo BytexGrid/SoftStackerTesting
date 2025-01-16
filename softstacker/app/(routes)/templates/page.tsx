@@ -1,23 +1,27 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function TemplatesLanding() {
   const osOptions = [
     {
       name: 'Windows',
       path: '/windows',
-      description: 'Software templates for Windows machines'
+      description: 'Software templates for Windows machines',
+      icon: 'https://upload.wikimedia.org/wikipedia/commons/5/5f/Windows_logo_-_2012.svg'
     },
     {
       name: 'macOS',
       path: '/macos',
-      description: 'Software templates for Mac computers'
+      description: 'Software templates for Mac computers',
+      icon: 'https://upload.wikimedia.org/wikipedia/commons/3/30/MacOS_logo.svg'
     },
     {
       name: 'Linux',
       path: '/linux',
-      description: 'Software templates for Linux distributions'
+      description: 'Software templates for Linux distributions',
+      icon: 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Icons8_flat_linux.svg'
     }
   ];
 
@@ -38,14 +42,18 @@ export default function TemplatesLanding() {
             <Link
               key={os.name}
               href={os.path}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 hover:shadow-md transition-shadow"
+              className="group bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 hover:shadow-md transition-shadow"
             >
               <div className="text-center">
                 <div className="mb-6">
-                  <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-800 rounded-full flex items-center justify-center transition-colors mx-auto">
-                    <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                      {os.name[0]}
-                    </span>
+                  <div className="flex items-center justify-center mx-auto">
+                    <Image
+                      src={os.icon}
+                      alt={os.name}
+                      width={48}
+                      height={48}
+                      className="transition-transform group-hover:scale-110"
+                    />
                   </div>
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
