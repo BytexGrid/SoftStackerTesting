@@ -197,4 +197,4 @@ npm start
 - Wiki for additional documentation
 
 ## License
-MIT License - See LICENSE file for details 
+GNU General Public License - See LICENSE file for details 
