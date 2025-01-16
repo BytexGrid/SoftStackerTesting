@@ -348,7 +348,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Professional Templates</h3>
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Find software collections for every profession and workflow. Whether you're a developer, designer, or content creator, discover tools that match your needs.
+                  Find software collections for every profession and workflow. Whether you&apos;re a developer, designer, or content creator, discover tools that match your needs.
                 </p>
                 <ul className="space-y-3 text-gray-600 dark:text-gray-300">
                   <li className="flex items-center gap-3">
